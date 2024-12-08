@@ -1,15 +1,25 @@
 import sys
+import tqdm
 import bounce
 import numpy as np
+from PIL import Image
 
 def main():
-    go1 = bounce.GaussianObject(np.array([0.0, 0.0]), np.array([0.0, 0.0]), 1.0)
-    go2 = bounce.GaussianObject(np.array([1.0, 1.0]), np.array([0.0, 0.0]), 1.0)
-    for _ in range(32):
-        go1.push(go2)
-        print(go2)
-        go2.step(0.01)
-        print(go2)
+    go1 = bounce.GaussianObject(np.array([5.0, 5.0]), np.array([-1.1, -0.9]), 1.0)
+    go2 = bounce.GaussianObject(np.array([-5.0, -5.0]), np.array([1.1, 0.9]), 1.0)
+    box = bounce.Box([go1, go2], np.array([-10.0, 10.0]), np.array([10.0, -10.0]))
+    images = []
+    for i in tqdm.tqdm(range(512), desc="Running"):
+        box.step(0.05)
+        if i % 4 == 0:
+            images.append(Image.fromarray((box.render(0.05) * 255).astype(np.uint8)))
+    images[0].save(
+        "ztmp.gif",
+        save_all=True,
+        append_images=images[1:],
+        duration=1000 // 60,
+        loop=0,
+    )
 
 if __name__ == "__main__":
     try:

@@ -3,8 +3,8 @@ from .base_object import BaseObject
 
 class GaussianObject(BaseObject):
 
-    def __init__(self, pos2d, vel2d, std):
-        super().__init__(pos2d, vel2d)
+    def __init__(self, pos2d, vel2d, std, frozen=False):
+        super().__init__(pos2d, vel2d, frozen)
         self.std = std
 
     # Gaussian with (0, 1].
