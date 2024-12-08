@@ -1,2 +1,2 @@
-# bounce
+# Bounce
 Weird animations! :3
