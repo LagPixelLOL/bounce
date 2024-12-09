@@ -3,7 +3,7 @@ from .utils import unit_diff, overlapped_volume
 
 class BaseObject:
 
-    def __init__(self, pos2d, vel2d, frozen=False):
+    def __init__(self, pos2d, vel2d=np.zeros(2), frozen=False):
         self.pos2d = pos2d
         self.frozen = frozen
         if not self.frozen:
@@ -20,12 +20,15 @@ class BaseObject:
         self.pos2d += self.vel2d * t
         self.reset_acc()
 
-    def get_acc_to_target(self, target):
-        if target.frozen:
-            return None
-        acc_base = unit_diff(self.pos2d, target.pos2d)
-        acc_scale = overlapped_volume(self, target)
-        return acc_base * (np.exp(acc_scale) - 1)
+    def get_acc_to_target(self, target, acc_scale):
+        return None if target.frozen else unit_diff(self.pos2d, target.pos2d) * (np.exp(acc_scale) - 1)
+
+    # Returns (Self to other, Other to self).
+    def get_mutual_acc(self, other):
+        if self.frozen and other.frozen:
+            return (None, None)
+        acc_scale = overlapped_volume(self, other)
+        return (self.get_acc_to_target(other, acc_scale), other.get_acc_to_target(self, acc_scale))
 
     def accelerate(self, acc_vec):
         if self.frozen or acc_vec is None:
@@ -36,6 +39,9 @@ class BaseObject:
         if self.frozen:
             return
         self.acc2d = np.zeros(2)
+
+    def render(self, x_matrix, y_matrix):
+        raise NotImplementedError
 
     def __str__(self):
         if self.frozen:
