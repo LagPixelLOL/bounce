@@ -14,6 +14,7 @@ def parse_args():
     parser.add_argument("-b", "--background", default="000000", help="Hex color code for background")
     parser.add_argument("-n", "--n-objects", type=int, default=8, help="Number of objects on the plane")
     parser.add_argument("-v", "--velocity", type=float, default=1.0, help="Initial magnitude of velocity for the objects")
+    parser.add_argument("-d", "--std", type=float, default=1.0, help="Standard deviation for the objects")
     parser.add_argument("-S", "--seed", type=int, default=None, help="The seed used to spawn the objects")
     parser.add_argument("-W", "--width", type=int, default=256, help="Width of the output")
     parser.add_argument("-H", "--height", type=int, default=256, help="Height of the output")
@@ -43,6 +44,9 @@ def parse_args():
     if args.velocity < 0:
         print("Initial magnitude of velocity must be non-negative!")
         sys.exit(1)
+    if args.std <= 0:
+        print("Standard deviation must be positive!")
+        sys.exit(1)
     if args.width < 1:
         print("Width of the output must be positive!")
         sys.exit(1)
@@ -71,8 +75,6 @@ def parse_args():
 
 def main():
     args = parse_args()
-    background = args.background
-    foreground = args.foreground.astype(np.int16) - background
     generator = np.random.default_rng(args.seed)
     positive_x_bound = args.width / 2 * args.resolution
     negative_x_bound = -positive_x_bound
@@ -84,21 +86,21 @@ def main():
         pos2d = np.array([generator.uniform(negative_x_bound, positive_x_bound), generator.uniform(negative_y_bound, positive_y_bound)])
         theta = generator.uniform(0, math.tau)
         vel2d = np.array([np.cos(theta), np.sin(theta)]) * args.velocity
-        gaussian_objects.append(bounce.GaussianObject(pos2d, vel2d, 1.0, foreground))
-    box = bounce.Box(gaussian_objects, np.array([negative_x_bound, positive_y_bound]), np.array([positive_x_bound, negative_y_bound]), background)
+        gaussian_objects.append(bounce.GaussianObject(pos2d, vel2d, args.std, args.foreground))
+    box = bounce.Box(gaussian_objects, np.array([negative_x_bound, positive_y_bound]), np.array([positive_x_bound, negative_y_bound]), args.background)
 
     images = []
     for i in tqdm.tqdm(range(args.total_steps), desc="Running"):
         box.step(args.time_step)
         if i % args.render_steps == 0:
             images.append(Image.fromarray(box.render(args.resolution)))
-    output_dir = "outputs"
-    os.makedirs(output_dir, exist_ok=True)
+    outputs_dir = "outputs"
+    os.makedirs(outputs_dir, exist_ok=True)
     images[0].save(
-        os.path.join(output_dir, datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S.gif")),
+        os.path.join(outputs_dir, datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S.gif")),
         save_all=True,
         append_images=images[1:],
-        duration=1000 // 60,
+        duration=1000 // args.fps,
         loop=0,
     )
 
