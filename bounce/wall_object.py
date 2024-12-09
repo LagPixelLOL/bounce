@@ -49,7 +49,7 @@ class WallObject(BaseObject):
                 acc_base = np.array([-1.0, 0.0])
             case _:
                 raise NotImplementedError(f"Unknown wall_type {self.wall_type}!")
-        return acc_base * (np.exp(acc_scale) - 1)
+        return acc_base * (np.exp(acc_scale * 2) - 1)
 
     def __str__(self):
         return f"{self.__class__.__name__}(Wall type={self.wall_type}, Line={self.line})"

@@ -21,7 +21,7 @@ class BaseObject:
         self.reset_acc()
 
     def get_acc_to_target(self, target, acc_scale):
-        return None if target.frozen else unit_diff(self.pos2d, target.pos2d) * (np.exp(acc_scale) - 1)
+        return None if target.frozen else unit_diff(self.pos2d, target.pos2d) * (np.exp(acc_scale * 2) - 1)
 
     # Returns (Self to other, Other to self).
     def get_mutual_acc(self, other):
