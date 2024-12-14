@@ -24,8 +24,9 @@ def parse_args():
     parser.add_argument("-q", "--fps", type=int, default=30, help="FPS for the output")
     parser.add_argument("-t", "--time-step", type=float, default=0.025, help="Time resolution for each step")
     parser.add_argument("-s", "--total-steps", type=int, default=128, help="Total steps to run")
-    parser.add_argument("-p", "--render-steps", type=int, default=2, help="Render every n steps")
+    parser.add_argument("-p", "--render-steps", type=int, default=1, help="Render every n steps")
     parser.add_argument("-R", "--rainbow", action="store_true", help="Rainbow colors for the objects")
+    parser.add_argument("-a", "--avif", action="store_true", help="Save using AVIF format, need to have pillow-avif-plugin installed")
     args = parser.parse_args()
 
     def hex_to_rgb(hex_str):
@@ -80,6 +81,12 @@ def parse_args():
     if args.render_steps > args.total_steps:
         print("Render steps must be less than or equal to total steps!")
         sys.exit(1)
+    if args.avif:
+        try:
+            import pillow_avif
+        except ImportError:
+            print("You need to pip install pillow-avif-plugin to save using AVIF format!")
+            sys.exit(1)
     return args
 
 def main():
@@ -111,15 +118,16 @@ def main():
     os.makedirs(outputs_dir, exist_ok=True)
     save_path_no_ext = os.path.join(outputs_dir, datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
     if len(images) <= 1:
-        images[0].save(save_path_no_ext + ".png")
+        if args.avif:
+            images[0].save(save_path_no_ext + ".avif", quality=75)
+        else:
+            images[0].save(save_path_no_ext + ".png")
         return
-    images[0].save(
-        save_path_no_ext + ".gif",
-        save_all=True,
-        append_images=images[1:],
-        duration=1000 // args.fps,
-        loop=0,
-    )
+    save_kwargs = {"save_all": True, "append_images": images[1:], "duration": 1000 // args.fps}
+    if args.avif:
+        images[0].save(save_path_no_ext + ".avif", quality=50, **save_kwargs)
+    else:
+        images[0].save(save_path_no_ext + ".gif", loop=0, **save_kwargs)
 
 if __name__ == "__main__":
     try:
